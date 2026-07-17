@@ -1,0 +1,367 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Handoff — Sibling Care Circle</title>
+<meta name="description" content="A shared space for adult siblings caring for a parent together — whose-turn rotation, visit logs, and a handoff note that has to actually be read.">
+<style>
+  :root {
+    --canvas: #F4EFEA;
+    --panel: #FBF8F4;
+    --ink: #342E3D;
+    --ink-muted: #7C7488;
+    --hairline: #E3DAD0;
+    --lavender: #9B8AC4;
+    --lavender-deep: #76639E;
+    --stone: #C9BEB0;
+    --stone-deep: #A79A88;
+    --glow: #E8B975;
+    --waiting: #C9793F;
+    --good: #6E9B7B;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --canvas: #201C26;
+      --panel: #2A2530;
+      --ink: #F1EBF2;
+      --ink-muted: #A79FB3;
+      --hairline: #3A3542;
+      --stone: #6E6459;
+      --stone-deep: #8C8071;
+    }
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background: var(--canvas);
+    color: var(--ink);
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Helvetica, Arial, sans-serif;
+    overflow-x: hidden;
+  }
+  .serif { font-family: "New York", Georgia, "Times New Roman", serif; }
+
+  a { color: var(--lavender-deep); }
+
+  .wrap { max-width: 920px; margin: 0 auto; padding: 0 24px; }
+
+  /* ---------- Hero ---------- */
+  .hero {
+    padding: 72px 0 40px;
+    text-align: center;
+    position: relative;
+  }
+  .hero-stage {
+    width: min(420px, 82vw);
+    height: min(420px, 82vw);
+    margin: 0 auto 12px;
+    position: relative;
+  }
+  .arc { fill: none; stroke: var(--lavender); stroke-opacity: 0.32; stroke-width: 2.5; }
+  .arc-glow { fill: none; stroke: var(--glow); stroke-opacity: 0.9; stroke-width: 3.2; }
+  .node { filter: drop-shadow(0 3px 6px rgba(0,0,0,0.12)); }
+  .node circle.ring { fill: var(--panel); stroke-width: 3; }
+  .parent-node circle.ring { stroke: var(--stone-deep); }
+  .pulse-dot { fill: #fff; }
+  .pulse-glow { fill: var(--glow); opacity: 0.85; }
+
+  @keyframes driftA { 0%,100% { transform: translateY(0px); } 50% { transform: translateY(-6px); } }
+  @keyframes driftB { 0%,100% { transform: translateY(0px); } 50% { transform: translateY(7px); } }
+  .float-a { animation: driftA 6s ease-in-out infinite; }
+  .float-b { animation: driftB 7s ease-in-out infinite; }
+
+  h1.title {
+    font-size: clamp(32px, 6vw, 48px);
+    font-weight: 600;
+    margin: 8px 0 10px;
+    letter-spacing: -0.01em;
+  }
+  .tagline {
+    color: var(--ink-muted);
+    font-size: 18px;
+    max-width: 520px;
+    margin: 0 auto 28px;
+    line-height: 1.5;
+  }
+
+  .cta-row { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+  .btn {
+    display: inline-block;
+    padding: 13px 26px;
+    border-radius: 14px;
+    font-weight: 600;
+    font-size: 15px;
+    text-decoration: none;
+    transition: transform 0.15s ease, opacity 0.15s ease;
+  }
+  .btn:active { transform: scale(0.97); }
+  .btn-primary { background: var(--lavender); color: #fff; }
+  .btn-primary:hover { opacity: 0.92; }
+  .btn-ghost { background: var(--panel); color: var(--ink); border: 1px solid var(--hairline); }
+
+  /* ---------- Problem ---------- */
+  .problem {
+    padding: 20px 0 56px;
+    text-align: center;
+  }
+  .problem p {
+    color: var(--ink-muted);
+    max-width: 620px;
+    margin: 0 auto;
+    font-size: 16px;
+    line-height: 1.6;
+  }
+  .problem .quote {
+    display: inline-block;
+    margin-top: 18px;
+    padding: 14px 20px;
+    background: var(--panel);
+    border: 1px solid var(--hairline);
+    border-radius: 14px;
+    font-family: "New York", Georgia, serif;
+    font-style: italic;
+    color: var(--ink);
+    font-size: 15px;
+  }
+
+  /* ---------- Features ---------- */
+  .features {
+    padding: 20px 0 64px;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 18px;
+  }
+  .card {
+    background: var(--panel);
+    border: 1px solid var(--hairline);
+    border-radius: 20px;
+    padding: 24px;
+    text-align: left;
+  }
+  .card .icon {
+    width: 44px; height: 44px;
+    border-radius: 50%;
+    background: rgba(155,138,196,0.16);
+    display: flex; align-items: center; justify-content: center;
+    margin-bottom: 14px;
+  }
+  .card h3 { font-size: 18px; margin: 0 0 8px; font-family: "New York", Georgia, serif; font-weight: 600; }
+  .card p { font-size: 14.5px; color: var(--ink-muted); line-height: 1.55; margin: 0; }
+  .card.highlight { border-color: var(--waiting); background: color-mix(in srgb, var(--waiting) 8%, var(--panel)); }
+  .card.highlight .icon { background: rgba(201,121,63,0.16); }
+
+  /* ---------- Waiting demo ---------- */
+  .waiting-demo {
+    padding: 8px 0 64px;
+  }
+  .banner {
+    max-width: 520px;
+    margin: 0 auto;
+    background: rgba(201,121,63,0.12);
+    border: 1px solid rgba(201,121,63,0.35);
+    border-radius: 14px;
+    padding: 14px 16px;
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+  }
+  .banner .glass { font-size: 20px; }
+  .banner strong { display: block; font-size: 14px; }
+  .banner span { font-size: 13px; color: var(--ink-muted); }
+
+  /* ---------- Pricing ---------- */
+  .pricing { padding: 20px 0 72px; text-align: center; }
+  .pricing h2 { font-family: "New York", Georgia, serif; font-size: 28px; margin-bottom: 6px; }
+  .pricing .sub { color: var(--ink-muted); margin-bottom: 28px; }
+  .plans { display: flex; gap: 18px; justify-content: center; flex-wrap: wrap; }
+  .plan {
+    background: var(--panel);
+    border: 1px solid var(--hairline);
+    border-radius: 20px;
+    padding: 28px 26px;
+    width: 260px;
+    text-align: left;
+  }
+  .plan.pro { border-color: var(--lavender); box-shadow: 0 8px 30px rgba(155,138,196,0.18); }
+  .plan .name { font-weight: 600; font-size: 15px; color: var(--ink-muted); margin-bottom: 6px; }
+  .plan .price { font-size: 30px; font-weight: 700; margin-bottom: 4px; }
+  .plan .price small { font-size: 14px; font-weight: 500; color: var(--ink-muted); }
+  .plan ul { list-style: none; padding: 0; margin: 16px 0 0; }
+  .plan li { font-size: 14px; color: var(--ink); padding: 6px 0; display: flex; gap: 8px; }
+  .plan li::before { content: "•"; color: var(--lavender); font-weight: 700; }
+
+  footer {
+    border-top: 1px solid var(--hairline);
+    padding: 28px 0 40px;
+    text-align: center;
+    color: var(--ink-muted);
+    font-size: 13px;
+  }
+  footer a { margin: 0 10px; color: var(--ink-muted); text-decoration: underline; }
+</style>
+</head>
+<body>
+
+  <section class="hero">
+    <div class="wrap">
+      <div class="hero-stage">
+        <svg viewBox="0 0 420 420" width="100%" height="100%" aria-hidden="true">
+          <defs>
+            <radialGradient id="glowGrad" cx="50%" cy="50%" r="50%">
+              <stop offset="0%" stop-color="#E8B975" stop-opacity="0.95"/>
+              <stop offset="100%" stop-color="#E8B975" stop-opacity="0"/>
+            </radialGradient>
+          </defs>
+
+          <g class="arcs">
+            <path id="arc1" class="arc" d="M210 210 Q210 130 210 70"/>
+            <path id="arc2" class="arc arc-glow" d="M210 210 Q285 165 344 128"/>
+            <path id="arc3" class="arc" d="M210 210 Q285 255 332 322"/>
+            <path id="arc4" class="arc" d="M210 210 Q135 255 90 330"/>
+            <path id="arc5" class="arc" d="M210 210 Q135 165 78 132"/>
+          </g>
+
+          <circle class="pulse-glow" r="14" cx="210" cy="210">
+            <animateMotion dur="3.4s" repeatCount="indefinite" path="M0 0 Q75 -45 134 -82" keyPoints="0;1" keyTimes="0;1" calcMode="linear"/>
+            <animate attributeName="opacity" values="0;1;1;0" keyTimes="0;0.05;0.85;1" dur="3.4s" repeatCount="indefinite"/>
+          </circle>
+          <circle class="pulse-dot" r="5" cx="210" cy="210">
+            <animateMotion dur="3.4s" repeatCount="indefinite" path="M0 0 Q75 -45 134 -82" keyPoints="0;1" keyTimes="0;1" calcMode="linear"/>
+            <animate attributeName="opacity" values="0;1;1;0" keyTimes="0;0.05;0.85;1" dur="3.4s" repeatCount="indefinite"/>
+          </circle>
+
+          <g class="node float-a" transform="translate(210,70)">
+            <circle class="ring" r="30" stroke="#9B8AC4"/>
+            <text x="0" y="6" text-anchor="middle" font-size="18" font-weight="600" fill="#9B8AC4" font-family="-apple-system,sans-serif">P</text>
+          </g>
+          <g class="node float-b" transform="translate(344,128)">
+            <circle class="ring" r="30" stroke="#C98A6B"/>
+            <text x="0" y="6" text-anchor="middle" font-size="18" font-weight="600" fill="#C98A6B" font-family="-apple-system,sans-serif">S</text>
+          </g>
+          <g class="node float-a" transform="translate(332,322)">
+            <circle class="ring" r="30" stroke="#6E9B9B"/>
+            <text x="0" y="6" text-anchor="middle" font-size="18" font-weight="600" fill="#6E9B9B" font-family="-apple-system,sans-serif">J</text>
+          </g>
+          <g class="node float-b" transform="translate(90,330)">
+            <circle class="ring" r="30" stroke="#B98CAE"/>
+            <text x="0" y="6" text-anchor="middle" font-size="18" font-weight="600" fill="#B98CAE" font-family="-apple-system,sans-serif">M</text>
+          </g>
+          <g class="node float-a" transform="translate(78,132)">
+            <circle class="ring" r="30" stroke="#8FA36E"/>
+            <text x="0" y="6" text-anchor="middle" font-size="18" font-weight="600" fill="#8FA36E" font-family="-apple-system,sans-serif">D</text>
+          </g>
+
+          <g class="node parent-node" transform="translate(210,210)">
+            <circle class="ring" r="42" fill="#D7CBBB" stroke="#A79A88"/>
+            <text x="0" y="7" text-anchor="middle" font-size="20" font-weight="600" fill="#5B5044" font-family="-apple-system,sans-serif">Mom</text>
+          </g>
+        </svg>
+      </div>
+
+      <h1 class="title serif">Handoff</h1>
+      <p class="tagline">A shared care circle for siblings looking after a parent together — whose turn it is, what happened at the last visit, and one honest signal for who currently has the baton.</p>
+      <div class="cta-row">
+        <a class="btn btn-primary" href="#pricing">See Pricing</a>
+        <a class="btn btn-ghost" href="#features">How It Works</a>
+      </div>
+    </div>
+  </section>
+
+  <section class="problem">
+    <div class="wrap">
+      <p>Group texts get buried. Shared docs go stale. Nobody's quite sure whose week it is, or whether the person taking over actually saw the note about the new medication.</p>
+      <div class="quote">"We've been using a Google Doc and a paper calendar on the fridge — it's a mess, and someone always misses something."</div>
+    </div>
+  </section>
+
+  <section class="features" id="features">
+    <div class="wrap" style="display:grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 18px;">
+
+      <div class="card">
+        <div class="icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="#9B8AC4" stroke-width="1.8"/><path d="M12 7v5l3 2" stroke="#9B8AC4" stroke-width="1.8" stroke-linecap="round"/></svg>
+        </div>
+        <h3>Whose-turn rotation</h3>
+        <p>Siblings take turns automatically. Everyone can see, at a glance, exactly whose turn it is right now — no more group-text guessing.</p>
+      </div>
+
+      <div class="card">
+        <div class="icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M4 4h16v13H8l-4 4V4z" stroke="#9B8AC4" stroke-width="1.8" stroke-linejoin="round"/></svg>
+        </div>
+        <h3>Quick visit logs</h3>
+        <p>A short note and an optional photo after every visit or call. Light enough to actually keep up with, visible to the whole circle instantly.</p>
+      </div>
+
+      <div class="card highlight">
+        <div class="icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M4 6h16v11a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V6z" stroke="#C9793F" stroke-width="1.8"/><path d="M4 7l8 6 8-6" stroke="#C9793F" stroke-width="1.8" stroke-linecap="round"/></svg>
+        </div>
+        <h3>The handoff note has to be read</h3>
+        <p>The outgoing sibling leaves a note. The next sibling has to actually open it — a real read timestamp, not just "delivered" — before their turn is officially theirs.</p>
+      </div>
+
+      <div class="card">
+        <div class="icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M12 3l2 5 5 2-5 2-2 5-2-5-5-2 5-2 2-5z" stroke="#9B8AC4" stroke-width="1.6" stroke-linejoin="round"/></svg>
+        </div>
+        <h3>AI weekly digest</h3>
+        <p>One warm, specific sentence condensing the whole week's notes — written for whoever lives too far away to visit in person.</p>
+      </div>
+
+    </div>
+  </section>
+
+  <section class="waiting-demo">
+    <div class="wrap">
+      <div class="banner">
+        <span class="glass">⏳</span>
+        <div>
+          <strong>Still waiting for Sam to read the handoff</strong>
+          <span>Priya sent it 20 minutes ago — Sam's turn isn't official yet.</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="pricing" id="pricing">
+    <div class="wrap">
+      <h2 class="serif">Simple, per-family pricing</h2>
+      <p class="sub">One subscription covers everyone in the circle — not billed per sibling.</p>
+      <div class="plans">
+        <div class="plan">
+          <div class="name">Free</div>
+          <div class="price">$0</div>
+          <ul>
+            <li>Up to 2 siblings in the circle</li>
+            <li>Whose-turn rotation</li>
+            <li>Handoff notes with read receipts</li>
+            <li>Last 5 visit logs</li>
+          </ul>
+        </div>
+        <div class="plan pro">
+          <div class="name">Handoff Pro</div>
+          <div class="price">$7.99 <small>/ month, per family</small></div>
+          <ul>
+            <li>Unlimited siblings</li>
+            <li>AI weekly digest</li>
+            <li>Full visit-log history</li>
+            <li>Everything in Free</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="wrap">
+      <div>Handoff — a shared care circle for siblings.</div>
+      <div style="margin-top:8px;">
+        <a href="privacy.html">Privacy Policy</a>
+        <a href="terms.html">Terms of Use</a>
+      </div>
+    </div>
+  </footer>
+
+</body>
+</html>

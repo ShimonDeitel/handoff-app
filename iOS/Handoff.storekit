@@ -1,0 +1,53 @@
+{
+  "appPolicies" : {
+    "eula" : "",
+    "policies" : [
+      {
+        "locale" : "en_US",
+        "policyText" : "",
+        "policyURL" : ""
+      }
+    ]
+  },
+  "identifier" : "HANDOFF_STOREKIT_CONFIG",
+  "nonRenewingSubscriptions" : [],
+  "products" : [],
+  "settings" : {
+    "_failTransactionsEnabled" : false,
+    "_storeKitErrors" : []
+  },
+  "subscriptionGroups" : [
+    {
+      "id" : "22600006",
+      "localizations" : [],
+      "name" : "Handoff Pro",
+      "subscriptions" : [
+        {
+          "adHocOffers" : [],
+          "codeOffers" : [],
+          "displayPrice" : "7.99",
+          "familyShareable" : false,
+          "groupNumber" : 1,
+          "internalID" : "handoff_pro_monthly_id",
+          "introductoryOffer" : null,
+          "localizations" : [
+            {
+              "description" : "Unlimited siblings, the AI weekly digest, and full visit-log history for your whole care circle.",
+              "displayName" : "Handoff Pro",
+              "locale" : "en_US"
+            }
+          ],
+          "productID" : "com.shimondeitel.handoff.pro.monthly",
+          "recurringSubscriptionPeriod" : "P1M",
+          "referenceName" : "Handoff Pro Monthly",
+          "subscriptionGroupID" : "22600006",
+          "type" : "RecurringSubscription"
+        }
+      ]
+    }
+  ],
+  "version" : {
+    "major" : 3,
+    "minor" : 0
+  }
+}

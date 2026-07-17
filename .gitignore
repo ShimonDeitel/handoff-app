@@ -1,0 +1,26 @@
+# Xcode build products / caches
+build/
+DerivedData/
+*.xcuserstate
+*.xcuserdatad/
+xcuserdata/
+*.moved-aside
+*.hmap
+*.ipa
+*.dSYM.zip
+*.dSYM
+
+# SwiftPM
+.build/
+.swiftpm/
+
+# CocoaPods / Carthage (not used, but harmless to ignore if introduced later)
+Pods/
+Carthage/Build/
+
+# macOS
+.DS_Store
+
+# Xcodegen-generated project (regenerate via `xcodegen generate` from project.yml)
+# Kept out of source control since it's fully derived from project.yml + on-disk sources.
+*.xcodeproj
