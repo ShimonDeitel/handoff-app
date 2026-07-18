@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Handoff — Privacy Policy</title>
+<style>
+  :root {
+    --canvas: #F4EFEA; --panel: #FBF8F4; --ink: #342E3D; --ink-muted: #7C7488;
+    --hairline: #E3DAD0; --lavender-deep: #76639E;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --canvas: #201C26; --panel: #2A2530; --ink: #F1EBF2; --ink-muted: #A79FB3; --hairline: #3A3542; }
+  }
+  body {
+    margin: 0; background: var(--canvas); color: var(--ink);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    line-height: 1.6;
+  }
+  .wrap { max-width: 720px; margin: 0 auto; padding: 56px 24px 80px; }
+  h1 { font-family: "New York", Georgia, serif; font-size: 32px; margin-bottom: 4px; }
+  .updated { color: var(--ink-muted); font-size: 14px; margin-bottom: 32px; }
+  h2 { font-size: 19px; margin-top: 36px; }
+  p, li { color: var(--ink); font-size: 15.5px; }
+  ul { padding-left: 20px; }
+  a { color: var(--lavender-deep); }
+  .card { background: var(--panel); border: 1px solid var(--hairline); border-radius: 14px; padding: 18px 20px; margin: 20px 0; }
+  a.back { display: inline-block; margin-bottom: 24px; font-size: 14px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <a class="back" href="index.html">&larr; Back to Handoff</a>
+  <h1>Privacy Policy</h1>
+  <div class="updated">Last updated: July 2026</div>
+
+  <p>Handoff is built for one purpose: helping siblings coordinate care for a parent. This
+  policy explains, plainly, what data the app touches and where it goes.</p>
+
+  <h2>Your family's data lives in your family's iCloud — not on our servers</h2>
+  <p>Everything you enter in Handoff — the circle's setup, sibling names and photos, visit
+  logs, and handoff notes — is stored using Apple's CloudKit, in a private iCloud database
+  owned by whoever set up the care circle. That person shares access to their private data
+  zone directly with the siblings they invite, using Apple's own CKShare sharing mechanism
+  (the same technology behind Shared Albums and Family Sharing).</p>
+  <div class="card">
+    Handoff does not operate its own database and cannot read your family's circle data. We
+    have no admin panel, no analytics dashboard, and no way to see your visit logs, photos,
+    or handoff messages. Apple's iCloud terms govern that storage; see
+    <a href="https://www.apple.com/legal/privacy/">Apple's privacy policy</a> for how iCloud
+    itself handles data.
+  </div>
+
+  <h2>The AI weekly digest (Pro feature)</h2>
+  <p>If you use the Pro weekly digest, the text of that week's visit logs is sent to a
+  Cloudflare Worker we operate, which forwards it to a Workers AI text model to write one
+  summary sentence. The request is stateless: nothing is written to a database, and the
+  Worker does not retain a copy of what was sent after the response is returned. No account
+  identifier, email, or persistent device ID travels with that request — just the visit-log
+  text needed to write the sentence.</p>
+
+  <h2>Photos</h2>
+  <p>Photos you attach to a visit log or a sibling's profile are stored the same way as
+  everything else — through your family's own CloudKit sharing, never on a separate server
+  operated by us. The app asks for photo-library access only to let you pick a photo; it
+  never scans or uploads your library beyond the specific photo you select.</p>
+
+  <h2>What we don't do</h2>
+  <ul>
+    <li>No advertising, no ad networks, no third-party trackers.</li>
+    <li>No selling or sharing of your data with anyone.</li>
+    <li>No account system beyond your own Apple ID / iCloud sign-in.</li>
+    <li>No location tracking.</li>
+  </ul>
+
+  <h2>What stays on your device</h2>
+  <p>Handoff keeps a local cache of your circle's data on your device (in the app's private
+  storage area) so the app opens instantly and keeps working without a network connection.
+  This local cache is not accessible to other apps and is deleted if you delete the app or
+  use "Erase Local Data" in Settings.</p>
+
+  <h2>Subscriptions</h2>
+  <p>Handoff Pro is an auto-renewable subscription processed entirely by Apple through the
+  App Store. We never see or store your payment details — Apple handles billing, and your
+  subscription status is confirmed to the app only through Apple's StoreKit framework.</p>
+
+  <h2>Children's privacy</h2>
+  <p>Handoff is intended for adult siblings coordinating care for a parent and is not
+  directed at children. We do not knowingly collect data from children under 13.</p>
+
+  <h2>Changes to this policy</h2>
+  <p>If this policy changes in a way that affects how your data is handled, we'll update this
+  page and the "Last updated" date above.</p>
+
+  <h2>Contact</h2>
+  <p>Questions about this policy can be sent through the App Store support link on Handoff's
+  product page.</p>
+</div>
+</body>
+</html>
