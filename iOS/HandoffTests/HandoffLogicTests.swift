@@ -1,11 +1,11 @@
 import XCTest
 import CoreGraphics
-import CloudKit
 @testable import Handoff
 
 /// Deterministic core-logic tests: rotation/handoff gating, radial trigonometry, free-tier
-/// gating, this-week filtering, digest prompt assembly, and CKRecord round-trips. No network,
-/// no CloudKit container, no UI — everything here is hand-verified plain values.
+/// gating, this-week filtering, and digest prompt assembly. No network, no CloudKit, no UI —
+/// everything here is hand-verified plain values. (CKRecord round-trip tests were removed along
+/// with the CloudKit sync path they exercised — see SPEC.md.)
 final class HandoffLogicTests: XCTestCase {
 
     private func day(_ n: Int) -> Date {
@@ -139,33 +139,4 @@ final class HandoffLogicTests: XCTestCase {
         XCTAssertTrue(prompt.contains("No visit notes were logged this week"))
     }
 
-    // MARK: CKRecord round-trips (pure model <-> record mapping, no network)
-
-    func testSiblingRecordRoundTrip() {
-        let sibling = Sibling(id: "sib-1", name: "Priya", orderIndex: 2, joinedAt: day(3))
-        let zoneID = CKRecordZone.ID(zoneName: "CareCircleZone", ownerName: CKCurrentUserDefaultName)
-        let record = sibling.toRecord(zoneID: zoneID)
-        let decoded = Sibling(record: record)
-        XCTAssertEqual(decoded?.id, "sib-1")
-        XCTAssertEqual(decoded?.name, "Priya")
-        XCTAssertEqual(decoded?.orderIndex, 2)
-    }
-
-    func testHandoffNoteRecordRoundTripPreservesNilReadAt() {
-        let note = HandoffNote(id: "note-1", fromSiblingID: "A", toSiblingID: "B", message: "Mom's appointment is Tuesday", createdAt: day(4), readAt: nil)
-        let zoneID = CKRecordZone.ID(zoneName: "CareCircleZone", ownerName: CKCurrentUserDefaultName)
-        let record = note.toRecord(zoneID: zoneID)
-        let decoded = HandoffNote(record: record)
-        XCTAssertEqual(decoded?.message, "Mom's appointment is Tuesday")
-        XCTAssertNil(decoded?.readAt)
-    }
-
-    func testHandoffNoteRecordRoundTripPreservesReadAt() {
-        let note = HandoffNote(id: "note-2", fromSiblingID: "A", toSiblingID: "B", message: "hi", createdAt: day(4), readAt: day(5))
-        let zoneID = CKRecordZone.ID(zoneName: "CareCircleZone", ownerName: CKCurrentUserDefaultName)
-        let record = note.toRecord(zoneID: zoneID)
-        let decoded = HandoffNote(record: record)
-        XCTAssertNotNil(decoded?.readAt)
-        XCTAssertEqual(decoded?.readAt, day(5))
-    }
 }

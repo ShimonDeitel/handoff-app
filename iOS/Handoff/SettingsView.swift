@@ -1,12 +1,4 @@
-import CloudKit
 import SwiftUI
-
-/// One item wrapper so a freshly-created `CKShare` (which isn't `Identifiable` itself) can
-/// drive a `.sheet(item:)` presentation of the system share sheet.
-private struct ShareItemBox: Identifiable {
-    let id = UUID()
-    let share: CKShare
-}
 
 struct SettingsView: View {
     @EnvironmentObject var careStore: CareCircleStore
@@ -19,9 +11,6 @@ struct SettingsView: View {
     @State private var showDeleteConfirm = false
     @State private var showAddSibling = false
     @State private var newSiblingName = ""
-    @State private var shareItem: ShareItemBox?
-    @State private var shareErrorMessage: String?
-    @State private var isPreparingShare = false
 
     private var version: String {
         let v = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0"
@@ -44,9 +33,6 @@ struct SettingsView: View {
             }
             .tint(HandoffColor.lavenderDeep)
             .sheet(isPresented: $showPaywall) { PaywallView() }
-            .sheet(item: $shareItem) { box in
-                CloudSharingView(share: box.share, container: CKContainer(identifier: HandoffCK.containerIdentifier))
-            }
             .alert("Add a Sibling", isPresented: $showAddSibling) {
                 TextField("Name", text: $newSiblingName)
                 Button("Add") {
@@ -64,7 +50,7 @@ struct SettingsView: View {
                 }
                 Button("Cancel", role: .cancel) {}
             } message: {
-                Text("This clears the circle from this device only. iCloud data and your siblings' devices are unaffected.")
+                Text("This clears the circle from this device. Handoff is single-device only right now, so there's no other copy anywhere else.")
             }
         }
     }
@@ -137,18 +123,12 @@ struct SettingsView: View {
                     Label("Unlock More Siblings with Pro", systemImage: "lock.fill")
                 }
             }
-            Button {
-                Task { await prepareShare() }
-            } label: {
-                HStack {
-                    if isPreparingShare { ProgressView() }
-                    Label("Invite Siblings", systemImage: "square.and.arrow.up")
-                }
+            HStack {
+                Label("Invite Siblings", systemImage: "square.and.arrow.up")
+                Spacer()
+                Text("Multi-device sync coming soon").font(.footnote).foregroundStyle(.secondary)
             }
-            .disabled(isPreparingShare || careStore.circle == nil)
-            if let shareErrorMessage {
-                Text(shareErrorMessage).font(.footnote).foregroundStyle(.secondary)
-            }
+            .foregroundStyle(.secondary)
         }
     }
 
@@ -167,7 +147,7 @@ struct SettingsView: View {
         } header: {
             Text("Data & Privacy")
         } footer: {
-            Text("Visit logs, handoff notes, and circle details sync only through your family's own iCloud, via Apple's CloudKit sharing — Handoff has no separate server database. The weekly digest sends that week's notes to a stateless AI service to write one sentence; nothing is stored there afterward.")
+            Text("Visit logs, handoff notes, and circle details stay on this device only — Handoff is single-device for now, with no server database and no cross-device sync. The weekly digest sends that week's notes to a stateless AI service to write one sentence; nothing is stored there afterward.")
         }
     }
 
@@ -177,18 +157,6 @@ struct SettingsView: View {
             Link("Terms of Use", destination: URL(string: "https://shimondeitel.github.io/handoff-site/terms.html")!)
         } footer: {
             Text(version).frame(maxWidth: .infinity, alignment: .center).padding(.top, 4)
-        }
-    }
-
-    private func prepareShare() async {
-        isPreparingShare = true
-        shareErrorMessage = nil
-        defer { isPreparingShare = false }
-        do {
-            let share = try await careStore.createOrFetchShare()
-            shareItem = ShareItemBox(share: share)
-        } catch {
-            shareErrorMessage = (error as? LocalizedError)?.errorDescription ?? "Couldn't prepare an invite link. Try again shortly."
         }
     }
 }

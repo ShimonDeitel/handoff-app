@@ -1,4 +1,3 @@
-import CloudKit
 import Foundation
 
 /// Fires once per logged visit so `ConstellationView` can animate the "handoff glow" traveling
@@ -11,20 +10,24 @@ struct PulseEvent: Identifiable, Equatable {
 }
 
 /// The full local snapshot, cached to disk so the app opens instantly and keeps working
-/// offline. CloudKit is the source of truth for cross-device sync; this file is a fallback and
-/// a fast first paint, exactly like `ParentSync`/`AppModel` elsewhere in this portfolio degrade
-/// to local-only state when iCloud is briefly unreachable.
+/// offline. Multi-device sync via CloudKit is disabled for this submission (the iCloud
+/// container isn't linked to the bundle ID yet — see SPEC.md); this local cache is the only
+/// persistence for now, exactly like the local-only fallback other apps in this portfolio use
+/// when iCloud is briefly unreachable.
 private struct LocalCache: Codable {
     var circle: CareCircle?
     var siblings: [Sibling]
     var visitLogs: [VisitLog]
     var handoffNotes: [HandoffNote]
     var mySiblingID: String?
-    var participantOwnerName: String?
 }
 
-/// App state: owns the local cache, the CloudKit round-trip, the turn/handoff rules, and the
-/// AI weekly digest. Pro itself is always read live from `Store` — never persisted here.
+/// App state: owns the local cache, the turn/handoff rules, and the AI weekly digest. Pro
+/// itself is always read live from `Store` — never persisted here.
+///
+/// Multi-device sync is disabled for now (single-device only): the CloudKit round-trip that
+/// used to live here has been removed for this submission, not just disconnected, since the
+/// app's iCloud container isn't linked to this bundle ID yet.
 @MainActor
 final class CareCircleStore: ObservableObject {
     @Published private(set) var circle: CareCircle?
@@ -35,7 +38,10 @@ final class CareCircleStore: ObservableObject {
         didSet { saveLocalCache() }
     }
 
+    /// Always false now that there is no network sync to wait on. Kept so call sites (e.g.
+    /// `ConstellationView`) don't need to change.
     @Published private(set) var isSyncing = false
+    /// Always nil now; retained for call-site compatibility with views that read it.
     @Published var syncErrorMessage: String?
     @Published var pulseEvent: PulseEvent?
 
@@ -45,9 +51,6 @@ final class CareCircleStore: ObservableObject {
 
     weak var store: Store?
 
-    private let ck: CloudKitManager
-    private var participantOwnerName: String?
-
     private static var cacheURL: URL {
         let dir = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
         try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
@@ -55,9 +58,7 @@ final class CareCircleStore: ObservableObject {
     }
 
     init() {
-        self.ck = CloudKitManager()
         loadLocalCache()
-        Task { await bootstrap() }
     }
 
     // MARK: Local cache
@@ -70,7 +71,6 @@ final class CareCircleStore: ObservableObject {
         visitLogs = cache.visitLogs
         handoffNotes = cache.handoffNotes
         mySiblingID = cache.mySiblingID
-        participantOwnerName = cache.participantOwnerName
     }
 
     private func saveLocalCache() {
@@ -79,46 +79,21 @@ final class CareCircleStore: ObservableObject {
             siblings: siblings,
             visitLogs: visitLogs,
             handoffNotes: handoffNotes,
-            mySiblingID: mySiblingID,
-            participantOwnerName: participantOwnerName
+            mySiblingID: mySiblingID
         )
         guard let data = try? JSONEncoder().encode(cache) else { return }
         try? data.write(to: Self.cacheURL, options: .atomic)
     }
 
-    // MARK: Bootstrap / sync
-
-    private func bootstrap() async {
-        if let participantOwnerName {
-            await ck.setParticipantOwnerName(participantOwnerName)
-        }
-        guard circle != nil else { return }
-        await refreshFromCloud()
-    }
-
-    func refreshFromCloud() async {
-        isSyncing = true
-        defer { isSyncing = false }
-        do {
-            if participantOwnerName == nil { try await ck.ensureZoneExists() }
-            await ck.ensureSubscription()
-            let fetched = try await ck.fetchEverything()
-            if let fetchedCircle = fetched.circle { circle = fetchedCircle }
-            if !fetched.siblings.isEmpty { siblings = fetched.siblings }
-            if !fetched.visits.isEmpty { visitLogs = fetched.visits }
-            if !fetched.notes.isEmpty { handoffNotes = fetched.notes }
-            syncErrorMessage = nil
-            saveLocalCache()
-        } catch {
-            // Local-only fallback: the UI keeps working off the cache; the next refresh retries.
-            syncErrorMessage = HandoffCKError.underlying(error.localizedDescription).errorDescription
-        }
-    }
+    /// No-op now that there's no cloud round-trip. Kept so existing call sites (e.g. a
+    /// pull-to-refresh in `ConstellationView`) keep compiling and behaving harmlessly.
+    func refreshFromCloud() async {}
 
     // MARK: Circle setup
 
     /// Creates a brand-new family circle on this device: the parent being cared for, plus this
-    /// device's own sibling identity as the first (and, until invited, only) member.
+    /// device's own sibling identity as the first (and, until multi-device sync returns, only)
+    /// member.
     func createCircle(parentName: String, myName: String) async {
         let newCircle = CareCircle(parentName: parentName)
         let me = Sibling(name: myName, orderIndex: 0)
@@ -126,16 +101,6 @@ final class CareCircleStore: ObservableObject {
         siblings = [me]
         mySiblingID = me.id
         saveLocalCache()
-
-        do {
-            try await ck.ensureZoneExists()
-            await ck.ensureSubscription()
-            try await ck.save(newCircle)
-            try await ck.save(me)
-            syncErrorMessage = nil
-        } catch {
-            syncErrorMessage = HandoffCKError.underlying(error.localizedDescription).errorDescription
-        }
     }
 
     var canAddSibling: Bool {
@@ -150,12 +115,6 @@ final class CareCircleStore: ObservableObject {
         let sibling = Sibling(name: trimmed, orderIndex: siblings.count)
         siblings.append(sibling)
         saveLocalCache()
-        do {
-            try await ck.save(sibling)
-            syncErrorMessage = nil
-        } catch {
-            syncErrorMessage = HandoffCKError.underlying(error.localizedDescription).errorDescription
-        }
         return true
     }
 
@@ -189,12 +148,6 @@ final class CareCircleStore: ObservableObject {
         visitLogs.insert(log, at: 0)
         saveLocalCache()
         pulseEvent = PulseEvent(originSiblingID: mySiblingID)
-        do {
-            try await ck.save(log)
-            syncErrorMessage = nil
-        } catch {
-            syncErrorMessage = HandoffCKError.underlying(error.localizedDescription).errorDescription
-        }
     }
 
     // MARK: Handoff notes
@@ -216,13 +169,6 @@ final class CareCircleStore: ObservableObject {
         circle.currentTurnIndex = nextIndex
         self.circle = circle
         saveLocalCache()
-        do {
-            try await ck.save(note)
-            try await ck.save(circle)
-            syncErrorMessage = nil
-        } catch {
-            syncErrorMessage = HandoffCKError.underlying(error.localizedDescription).errorDescription
-        }
     }
 
     /// The quirky feature's core action: the recipient actually opens and reads the note. Only
@@ -231,14 +177,7 @@ final class CareCircleStore: ObservableObject {
         guard let mySiblingID,
               let index = handoffNotes.firstIndex(where: { $0.toSiblingID == mySiblingID && $0.readAt == nil }) else { return }
         handoffNotes[index].readAt = .now
-        let note = handoffNotes[index]
         saveLocalCache()
-        do {
-            try await ck.save(note)
-            syncErrorMessage = nil
-        } catch {
-            syncErrorMessage = HandoffCKError.underlying(error.localizedDescription).errorDescription
-        }
     }
 
     // MARK: Weekly digest (Pro)
@@ -260,25 +199,6 @@ final class CareCircleStore: ObservableObject {
         }
     }
 
-    // MARK: Sharing
-
-    func createOrFetchShare() async throws -> CKShare {
-        let title = "Handoff — \(circle?.parentName ?? "Care Circle")"
-        return try await ck.makeOrFetchZoneShare(title: title)
-    }
-
-    func acceptShare(metadata: CKShare.Metadata) async {
-        do {
-            let ownerName = try await ck.acceptShare(metadata: metadata)
-            participantOwnerName = ownerName
-            await ck.setParticipantOwnerName(ownerName)
-            saveLocalCache()
-            await refreshFromCloud()
-        } catch {
-            syncErrorMessage = HandoffCKError.underlying(error.localizedDescription).errorDescription
-        }
-    }
-
     // MARK: Data
 
     func deleteAllLocalData() {
@@ -287,7 +207,6 @@ final class CareCircleStore: ObservableObject {
         visitLogs = []
         handoffNotes = []
         mySiblingID = nil
-        participantOwnerName = nil
         try? FileManager.default.removeItem(at: Self.cacheURL)
     }
 }

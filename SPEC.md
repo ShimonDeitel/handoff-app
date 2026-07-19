@@ -44,15 +44,28 @@ warm, specific one-line digest sentence for the distant sibling (e.g. "Mom had a
 Priya took her to PT twice and her appetite's back up, but the railing repair still needs
 scheduling"). Pro-gated.
 
-## Multi-user sync
+## Multi-user sync — CURRENTLY DISABLED (single-device only)
 
-Real CloudKit sharing, not a custom backend: one custom `CKRecordZone` ("CareCircleZone") per
-family, owned in the creator's private database and shared zone-wide via a single `CKShare`
-(`CKShare(recordZoneID:)`). The owner invites siblings through the system `UICloudSharingController`
-share sheet (Messages/Mail); every sibling who accepts reads and writes the exact same records
-through their own CloudKit shared database. Local JSON cache on disk keeps the app usable
-offline and gives an instant first paint, mirroring the degrade-to-local-only pattern used
-elsewhere in this portfolio for family-sharing apps.
+The design is real CloudKit sharing, not a custom backend: one custom `CKRecordZone`
+("CareCircleZone") per family, owned in the creator's private database and shared zone-wide via
+a single `CKShare` (`CKShare(recordZoneID:)`), with the owner inviting siblings through the
+system `UICloudSharingController` share sheet (Messages/Mail).
+
+That path is **not active in this submission**. The app's iCloud container
+(`iCloud.com.shimondeitel.handoff`) isn't yet linked to this bundle ID in the Apple Developer
+Portal — that link requires a manual portal step behind 2FA that wasn't available at submission
+time. Rather than ship a half-wired sync path, the CloudKit code (CKContainer/CKShare/CKRecord
+zone and subscription plumbing, the `UICloudSharingController` wrapper, and the
+push-notification entitlement/registration in the app delegate) has been removed, and the
+`aps-environment` and iCloud entitlements have been stripped from `Handoff.entitlements`.
+
+Handoff currently runs **local-only, single device**: the care circle, siblings, visit logs,
+and handoff notes persist only in the on-disk JSON cache (`CareCircleStore`'s `LocalCache`) that
+previously served as the offline fallback. The "Invite Siblings" row in Settings is visible but
+inert, labeled "Multi-device sync coming soon" instead of opening a (non-functional) share
+sheet. Re-enabling sync later means: link the iCloud container in the portal, restore the
+CloudKit round-trip in `CareCircleStore`/the removed `CloudKitSync.swift` (see git history),
+restore the entitlements, and re-wire the invite button.
 
 ## Design direction
 

@@ -2,7 +2,6 @@ import SwiftUI
 
 @main
 struct HandoffApp: App {
-    @UIApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
     @StateObject private var store: Store
     @StateObject private var careStore: CareCircleStore
 
@@ -19,14 +18,6 @@ struct HandoffApp: App {
             RootView()
                 .environmentObject(store)
                 .environmentObject(careStore)
-                .onAppear {
-                    AppDelegate.shareAcceptedHandler = { metadata in
-                        Task { await careStore.acceptShare(metadata: metadata) }
-                    }
-                    AppDelegate.remoteChangeHandler = {
-                        Task { await careStore.refreshFromCloud() }
-                    }
-                }
         }
     }
 }

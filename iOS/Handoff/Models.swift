@@ -1,7 +1,8 @@
 import Foundation
 
-/// One sibling in the care circle. `id` is a stable, app-owned UUID string (also used as the
-/// CloudKit record name) so logic never depends on CloudKit being reachable.
+/// One sibling in the care circle. `id` is a stable, app-owned UUID string. (It was also used
+/// as the CloudKit record name before multi-device sync was disabled for this submission — see
+/// SPEC.md — so logic never depended on CloudKit being reachable.)
 struct Sibling: Identifiable, Codable, Equatable {
     var id: String
     var name: String
@@ -26,8 +27,9 @@ struct Sibling: Identifiable, Codable, Equatable {
     }
 }
 
-/// The shared "care circle" itself: the parent being cared for, plus whose turn it is right
-/// now. One circle per family, shared to every sibling via a single CloudKit `CKShare`.
+/// The "care circle" itself: the parent being cared for, plus whose turn it is right now. One
+/// circle per family; multi-device sync to every sibling (originally via a single CloudKit
+/// `CKShare`) is disabled for this submission — see SPEC.md.
 struct CareCircle: Codable, Equatable {
     var id: String
     var parentName: String
