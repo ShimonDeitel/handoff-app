@@ -46,6 +46,16 @@ struct StonePanelButtonStyle: ButtonStyle {
 extension View {
     func prominentLavenderButton() -> some View { buttonStyle(FilledLavenderButtonStyle()) }
     func stonePanelButton() -> some View { buttonStyle(StonePanelButtonStyle()) }
+
+    /// Lets a tap anywhere on this view resign the keyboard, without swallowing taps meant for
+    /// buttons/controls inside it (hence `simultaneousGesture` rather than a plain gesture).
+    func dismissKeyboardOnTap() -> some View {
+        simultaneousGesture(
+            TapGesture().onEnded {
+                UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
+            }
+        )
+    }
 }
 
 /// A grouped card container used across Circle/Visits/Digest.

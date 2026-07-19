@@ -71,6 +71,7 @@ struct SendHandoffView: View {
                 }
                 .padding()
             }
+            .dismissKeyboardOnTap()
             .navigationTitle("Hand Off")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {

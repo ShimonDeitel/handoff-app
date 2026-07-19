@@ -80,7 +80,9 @@ struct LogVisitView: View {
                     }
                     .padding()
                 }
+                .scrollDismissesKeyboard(.interactively)
             }
+            .dismissKeyboardOnTap()
             .navigationTitle("Log a Visit")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {

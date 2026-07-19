@@ -72,7 +72,9 @@ struct OnboardingView: View {
                 }
                 .padding(.bottom, 40)
             }
+            .scrollDismissesKeyboard(.interactively)
         }
+        .dismissKeyboardOnTap()
     }
 
     private var canCreate: Bool {
