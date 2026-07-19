@@ -165,7 +165,7 @@
     gap: 12px;
     align-items: flex-start;
   }
-  .banner .glass { font-size: 20px; }
+  .banner .glass { display: flex; flex-shrink: 0; margin-top: 2px; }
   .banner strong { display: block; font-size: 14px; }
   .banner span { font-size: 13px; color: var(--ink-muted); }
 
@@ -315,7 +315,7 @@
   <section class="waiting-demo">
     <div class="wrap">
       <div class="banner">
-        <span class="glass">⏳</span>
+        <span class="glass"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M6 3L18 3L12 12L18 21L6 21L12 12Z" stroke="#C9793F" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
         <div>
           <strong>Still waiting for Sam to read the handoff</strong>
           <span>Priya sent it 20 minutes ago — Sam's turn isn't official yet.</span>
